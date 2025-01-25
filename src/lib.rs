@@ -1,5 +1,4 @@
-/// Public API for the `build-resource-byte-arrays` crate.
-use std::fs;
+use bytes::Bytes;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};
 use std::path::Path;
@@ -10,18 +9,26 @@ use std::path::Path;
 /// * `output_path` - The path where the generated Rust file will be written.
 /// * `byte_arrays` - A list of tuples (name, content) where:
 ///     - `name` is the name of the `pub static` variable.
-///     - `content` is a vector of bytes.
+///     - `content` is a `Bytes` object containing the byte data.
 ///
 /// # Example
 /// ```
 /// use build_resource_byte_arrays::write_byte_arrays;
-/// write_byte_arrays("output.rs", vec![("ARRAY_NAME", vec![1, 2, 3])], false)?;
+/// use bytes::Bytes;
+///
+/// write_byte_arrays(
+///     "output.rs",
+///     vec![("ARRAY_NAME", Bytes::from(vec![1, 2, 3]))],
+/// ).unwrap();
 /// ```
-pub fn write_byte_arrays(output_path: &str, byte_arrays: Vec<(&str, Vec<u8>)>) -> io::Result<()> {
-    let path = Path::new(output_path);
+pub fn write_byte_arrays<P: AsRef<Path>>(
+    output_path: P,
+    byte_arrays: Vec<(&str, Bytes)>,
+) -> io::Result<()> {
+    let path = output_path.as_ref();
 
     // Create or truncate the file
-    let mut file = fs::File::create(path)?;
+    let mut file = File::create(path)?;
 
     // Write a header
     writeln!(
@@ -31,7 +38,7 @@ pub fn write_byte_arrays(output_path: &str, byte_arrays: Vec<(&str, Vec<u8>)>) -
 
     // Write the byte arrays as `pub static`
     for (name, content) in byte_arrays {
-        writeln!(file, "pub static {name}: &[u8] = &{:?};", content)?;
+        writeln!(file, "pub static {name}: &[u8] = &{:?};", content.as_ref())?;
     }
 
     Ok(())
@@ -45,10 +52,10 @@ pub fn write_byte_arrays(output_path: &str, byte_arrays: Vec<(&str, Vec<u8>)>) -
 /// # Example
 /// ```
 /// use build_resource_byte_arrays::clear_byte_arrays;
-/// clear_byte_arrays("output.rs")?;
+/// clear_byte_arrays("output.rs").unwrap();
 /// ```
-pub fn clear_byte_arrays(output_path: &str) -> io::Result<()> {
-    let path = Path::new(output_path);
+pub fn clear_byte_arrays<P: AsRef<Path>>(output_path: P) -> io::Result<()> {
+    let path = output_path.as_ref();
 
     // Read the file and collect the lines
     let file = File::open(path)?;
