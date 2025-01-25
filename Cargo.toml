@@ -1,0 +1,10 @@
+[package]
+name = "build-resource-byte-arrays"
+version = "0.1.0-alpha"
+edition = "2021"
+
+[dependencies]
+
+[[bin]]
+name = "build-resource-byte-arrays"
+path = "src/main.rs"
