@@ -1,6 +1,6 @@
 # embed-resources (Work in Progress)
 
-`embed-resources` is a Rust crate built on top of [`embed-bytes`](https://github.com/jzombie/rust-embed-bytes) that extends its functionality to handle multiple resource types: local files, URLs, and in-memory data. It also supports optional Gzipped compression for reduced storage size.
+`embed-resources` is a Rust crate built on top of [`embed-bytes`](https://crates.io/crates/embed-bytes) that extends its functionality to handle multiple resource types: local files, URLs, and in-memory data. It also supports optional Gzipped compression for reduced storage size.
 
 Unlike `embed-bytes`, which directly embeds assets, `embed-resources` simplifies managing mixed resources by organizing them in a virtual "container." Resources are automatically converted into `.bin` files, and a Rust source file is generated to embed them using `include_bytes!`.
 
