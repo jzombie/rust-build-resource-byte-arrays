@@ -5,3 +5,5 @@
 It is intended to help avoid the complexity of relaying `OUT_DIR` from `build.rs` to the compilation step of consuming crates.
 
 -- WORK IN PROGRESS --
+
+Related: https://stackoverflow.com/questions/75676449/how-to-build-and-publish-a-crate-containing-generated-code
