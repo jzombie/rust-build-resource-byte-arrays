@@ -12,3 +12,7 @@ When used in a `build.rs` script, `embed-bytes` operates as a zero-cost abstract
 - https://github.com/rust-lang/cargo/issues/12456
 - https://github.com/rust-lang/cargo/issues/9398
 - https://github.com/pyrossh/rust-embed
+
+## License
+
+[MIT License](LICENSE) (c) 2025 Jeremy Harris.
