@@ -14,10 +14,3 @@ version = "0.1.0-alpha1"
 dependencies = [
  "bytes",
 ]
-
-[[package]]
-name = "embed-resources"
-version = "0.1.0-alpha"
-dependencies = [
- "embed-bytes",
-]
