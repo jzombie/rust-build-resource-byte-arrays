@@ -1,6 +1,6 @@
 [package]
 name = "embed-resources"
-version = "0.1.0-alpha"
+version = "0.1.0-alpha1"
 edition = "2021"
 repository = "https://github.com/jzombie/rust-embed-bytes"
 description = "A simple Rust crate to embed resources (files, URLs, data) as byte arrays."

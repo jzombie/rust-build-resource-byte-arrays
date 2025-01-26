@@ -13,4 +13,3 @@ bytes = "1.9.0"
 [features]
 default = ["build_resource_byte_arrays"]
 build_resource_byte_arrays = []
-

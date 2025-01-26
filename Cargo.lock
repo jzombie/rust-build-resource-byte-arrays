@@ -128,7 +128,7 @@ dependencies = [
 
 [[package]]
 name = "embed-resources"
-version = "0.1.0-alpha"
+version = "0.1.0-alpha1"
 dependencies = [
  "bytes",
  "embed-bytes",

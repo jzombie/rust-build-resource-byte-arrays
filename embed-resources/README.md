@@ -16,13 +16,13 @@ use embed_resources::{Resource, ResourceContainer};
 use std::path::Path;
 
 fn main() -> std::io::Result<()> {
-    let mut container = ResourceContainer::new();
+    let mut container = ResourceContainer::new(Path::new("embed"));
 
-    container.add_resource("local_file", Resource::File("assets/file.txt".to_string()));
-    container.add_resource("remote_data", Resource::Url("https://example.com/data.bin".to_string()));
-    container.add_resource("in_memory_data", Resource::Data(bytes::Bytes::from("Hello, world!")));
+    container.add_resource("local_file", Resource::File("assets/file.txt".to_string()), true);
+    container.add_resource("remote_data", Resource::Url("https://example.com/data.bin".to_string()), true);
+    container.add_resource("in_memory_data", Resource::Data(bytes::Bytes::from("Hello, world!")), true);
 
-    container.embed_all(Path::new("embed"), true)?;
+    container.embed_all()?;
 
     Ok(())
 }
