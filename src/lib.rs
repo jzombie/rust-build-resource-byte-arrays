@@ -66,13 +66,21 @@ pub fn write_byte_arrays(
     index_output_path: &Path,
     byte_arrays: Vec<(&str, Bytes)>,
 ) -> io::Result<()> {
+    // Get and sanitize the directory name
+    let directory_name = index_output_path
+        .file_name()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "Invalid directory name"))?
+        .to_string_lossy();
+
+    let sanitized_name = sanitize_to_valid_rust_identifier(&directory_name)?;
+
     // Ensure the output path is a directory
     if !index_output_path.exists() {
         fs::create_dir_all(index_output_path)?;
     } else if !index_output_path.is_dir() {
         return Err(io::Error::new(
             io::ErrorKind::InvalidInput,
-            "index_output_path must be a directory",
+            "index_output_path must be a directory.",
         ));
     }
 
@@ -80,11 +88,11 @@ pub fn write_byte_arrays(
     let rs_file_path = index_output_path
         .with_extension("rs")
         .file_name()
-        .map(|name| {
+        .map(|_| {
             index_output_path
                 .parent()
                 .unwrap_or_else(|| Path::new("."))
-                .join(name)
+                .join(format!("{}.rs", sanitized_name))
         })
         .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "Invalid directory name"))?;
 
@@ -111,10 +119,55 @@ pub fn write_byte_arrays(
         writeln!(
             rs_writer,
             "pub static {name}: &[u8] = include_bytes!(\"{}/{}\");",
-            index_output_path.file_name().unwrap().to_string_lossy(),
+            sanitized_name,
             format!("{name}.bin")
         )?;
     }
 
     Ok(())
+}
+
+fn sanitize_to_valid_rust_identifier(name: &str) -> Result<String, io::Error> {
+    if name.is_empty() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "Directory name cannot be empty.",
+        ));
+    }
+
+    // Replace invalid characters with `_`
+    let sanitized: String = name
+        .chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect();
+
+    // Ensure it doesn't start with a digit
+    if sanitized.chars().next().unwrap().is_ascii_digit() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            format!(
+                "Invalid directory name: '{}'. Directory names cannot start with a digit.",
+                name
+            ),
+        ));
+    }
+
+    // Check if the sanitized name is valid
+    if sanitized
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '_')
+    {
+        Ok(sanitized)
+    } else {
+        Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            format!("Unable to sanitize directory name: '{}'.", name),
+        ))
+    }
 }
