@@ -12,3 +12,7 @@ bytes = "1.9.0"
 [[bin]]
 name = "build-resource-byte-arrays"
 path = "src/main.rs"
+
+[features]
+default = ["build_resource_byte_arrays"]
+build_resource_byte_arrays = []
