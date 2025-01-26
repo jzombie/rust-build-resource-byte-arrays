@@ -1,7 +1,7 @@
 [package]
 name = "embed-bytes"
 authors = ["Jeremy Harris <jeremy.harris@zenosmosis.com>"]
-version = "0.1.0-alpha1"
+version = "0.1.0-alpha2"
 edition = "2021"
 repository = "https://github.com/jzombie/rust-embed-bytes"
 description = "A simple Rust crate to embed assets."
@@ -13,4 +13,3 @@ bytes = "1.9.0"
 [features]
 default = ["build_resource_byte_arrays"]
 build_resource_byte_arrays = []
-
