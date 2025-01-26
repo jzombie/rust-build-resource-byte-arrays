@@ -1,6 +1,6 @@
 # Rust Embed Bytes Utilities Workspace
 
-A workspace containing two related crates for embedding resources in Rust applications.
+A Rust workspace containing two related crates for embedding resources in Rust applications.
 
 ## Crates
 
