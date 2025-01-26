@@ -1,9 +1,13 @@
 use build_resource_byte_arrays::write_byte_arrays;
+// include!("../output.rs");
 
 fn main() {
-    // Create a byte array
-    let byte_array = vec![1, 2, 3];
+    let byte_arrays = vec![
+        ("ARRAY1", vec![1, 2, 3].into()),
+        ("ARRAY2", vec![4, 5, 7].into()),
+    ];
 
-    // Write the byte array to a Rust file
-    write_byte_arrays("output.rs", vec![("ARRAY_NAME", byte_array.into())]).unwrap();
+    write_byte_arrays("output.rs", "/tmp/123", byte_arrays, None).unwrap();
+
+    // println!("{:?}", ARRAY2);
 }

@@ -20,7 +20,7 @@ use std::path::Path;
 ///
 /// write_byte_arrays(
 ///     "output.rs",
-///     "bin_output",
+///     "bin_output_dir",
 ///     vec![("ARRAY1", Bytes::from(vec![1, 2, 3]))],
 /// ).unwrap();
 /// ```
