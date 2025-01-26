@@ -3,3 +3,4 @@ members = [
     ".",
     "embed-resources"
 ]
+resolver = "2"
