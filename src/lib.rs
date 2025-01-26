@@ -63,13 +63,25 @@ pub fn write_byte_arrays<P: AsRef<Path>, Q: AsRef<Path>>(
             "pub static {name}: &[u8] = include_bytes!(\"{}\");",
             bin_file_path.display()
         )?;
+
         writeln!(rust_file, "")?;
+
         writeln!(
             rust_file,
             "#[cfg(not(feature = \"{}\"))]",
             expanded_feature_flag
         )?;
         writeln!(rust_file, "pub static {name}: &[u8] = &[];")?;
+
+        writeln!(rust_file, "")?;
+
+        writeln!(
+            rust_file,
+            "#[cfg(not(feature = \"{}\"))]",
+            expanded_feature_flag
+        )?;
+        writeln!(rust_file, "#[ctor::ctor]",)?;
+        writeln!(rust_file, "eprintln!(\"Warning: `ARRAY1` is empty because the `build_resource_byte_arrays` feature is not enabled.\");")?;
     }
 
     Ok(())

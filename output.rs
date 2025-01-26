@@ -6,3 +6,16 @@ pub static ARRAY1: &[u8] = include_bytes!("/tmp/123/ARRAY1.bin");
 
 #[cfg(not(feature = "build_resource_byte_arrays"))]
 pub static ARRAY1: &[u8] = &[];
+
+#[cfg(not(feature = "build_resource_byte_arrays"))]
+#[ctor::ctor]
+eprintln!("Warning: `ARRAY1` is empty because the `build_resource_byte_arrays` feature is not enabled.");
+#[cfg(feature = "build_resource_byte_arrays")]
+pub static ARRAY2: &[u8] = include_bytes!("/tmp/123/ARRAY2.bin");
+
+#[cfg(not(feature = "build_resource_byte_arrays"))]
+pub static ARRAY2: &[u8] = &[];
+
+#[cfg(not(feature = "build_resource_byte_arrays"))]
+#[ctor::ctor]
+eprintln!("Warning: `ARRAY1` is empty because the `build_resource_byte_arrays` feature is not enabled.");
