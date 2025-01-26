@@ -1,4 +1,5 @@
 use bytes::Bytes;
+use std::env;
 use std::fs::{self, File};
 use std::io::{self, Write};
 use std::path::Path;
@@ -8,7 +9,6 @@ use std::path::Path;
 ///
 /// # Arguments
 /// * `output_rust_path` - The path where the generated Rust file will be written.
-/// * `output_bin_dir` - The directory where the `.bin` files will be saved.
 /// * `byte_arrays` - A list of tuples (name, content) where:
 ///     - `name` is the name of the `pub static` variable.
 ///     - `content` is a `Bytes` object containing the byte data.
@@ -20,26 +20,33 @@ use std::path::Path;
 ///
 /// write_byte_arrays(
 ///     "output.rs",
-///     "bin_output_dir",
 ///     vec![("ARRAY1", Bytes::from(vec![1, 2, 3]))],
+///     Some("build_resource_byte_arrays".to_string()),
 /// ).unwrap();
 /// ```
-pub fn write_byte_arrays<P: AsRef<Path>, Q: AsRef<Path>>(
+pub fn write_byte_arrays<P: AsRef<Path>>(
     output_rust_path: P,
-    output_bin_dir: Q,
     byte_arrays: Vec<(&str, Bytes)>,
     feature_flag: Option<String>,
 ) -> io::Result<()> {
-    let expanded_feature_flag = match feature_flag {
-        Some(flag) => flag,
-        None => "build_resource_byte_arrays".to_string(),
-    };
+    // Ensure the function is running in the context of `build.rs`
+    let out_dir = env::var("OUT_DIR").map_err(|_| {
+        io::Error::new(
+            io::ErrorKind::Other,
+            "This function must be called from within build.rs (OUT_DIR is not set).",
+        )
+    })?;
 
+    // Resolve the feature flag
+    let expanded_feature_flag =
+        feature_flag.unwrap_or_else(|| "build_resource_byte_arrays".to_string());
+
+    // Get the Rust file path and OUT_DIR for binaries
     let rust_file_path = output_rust_path.as_ref();
-    let bin_dir_path = output_bin_dir.as_ref();
+    let output_bin_dir = Path::new(&out_dir).join("bin");
 
     // Ensure the output binary directory exists
-    fs::create_dir_all(bin_dir_path)?;
+    fs::create_dir_all(&output_bin_dir)?;
 
     // Create or truncate the Rust file
     let mut rust_file = File::create(rust_file_path)?;
@@ -52,36 +59,42 @@ pub fn write_byte_arrays<P: AsRef<Path>, Q: AsRef<Path>>(
 
     for (name, content) in byte_arrays {
         // Write the `.bin` file
-        let bin_file_path = bin_dir_path.join(format!("{name}.bin"));
+        let bin_file_path = output_bin_dir.join(format!("{name}.bin"));
         let mut bin_file = File::create(&bin_file_path)?;
         bin_file.write_all(&content)?;
 
-        // Write logic for handling `build_mode` in the Rust file
+        // Write the `#[cfg(feature)]` block
         writeln!(rust_file, "#[cfg(feature = \"{}\")]", expanded_feature_flag)?;
         writeln!(
             rust_file,
-            "pub static {name}: &[u8] = include_bytes!(\"{}\");",
-            bin_file_path.display()
+            "pub static {name}: &[u8] = include_bytes!(concat!(env!(\"OUT_DIR\"),\"/bin/{name}.bin\"));",
         )?;
-
         writeln!(rust_file, "")?;
 
+        // Write the `#[cfg(not(feature))]` block
         writeln!(
             rust_file,
             "#[cfg(not(feature = \"{}\"))]",
             expanded_feature_flag
         )?;
         writeln!(rust_file, "pub static {name}: &[u8] = &[];")?;
-
         writeln!(rust_file, "")?;
 
+        // Write a warning using the `ctor` crate for runtime notification
         writeln!(
             rust_file,
             "#[cfg(not(feature = \"{}\"))]",
             expanded_feature_flag
         )?;
-        writeln!(rust_file, "#[ctor::ctor]",)?;
-        writeln!(rust_file, "eprintln!(\"Warning: `ARRAY1` is empty because the `build_resource_byte_arrays` feature is not enabled.\");")?;
+        writeln!(rust_file, "#[ctor::ctor]")?;
+        writeln!(rust_file, "fn warn_{name}_empty() {{",)?;
+        writeln!(
+            rust_file,
+            "    eprintln!(\"Warning: `{name}` is empty because the `{} ` feature is not enabled.\");",
+            expanded_feature_flag
+        )?;
+        writeln!(rust_file, "}}")?;
+        writeln!(rust_file, "")?;
     }
 
     Ok(())
