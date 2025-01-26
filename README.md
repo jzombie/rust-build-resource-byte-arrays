@@ -17,3 +17,7 @@ A Rust workspace containing two related crates for embedding resources in Rust a
 ## Usage
 
 Refer to the individual crate directories for more details and examples.  
+
+## License
+
+[MIT License](LICENSE) (c) 2025 Jeremy Harris.
