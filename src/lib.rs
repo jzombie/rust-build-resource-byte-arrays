@@ -2,7 +2,7 @@ use bytes::Bytes;
 use std::env;
 use std::fs::{self, File};
 use std::io::{self, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// Writes byte arrays to a Rust file as `pub static` constants and saves the
 /// byte contents to individual `.bin` files.
@@ -12,6 +12,7 @@ use std::path::Path;
 /// * `byte_arrays` - A list of tuples (name, content) where:
 ///     - `name` is the name of the `pub static` variable.
 ///     - `content` is a `Bytes` object containing the byte data.
+/// * `feature_flag` - An optional feature flag for conditional compilation.
 ///
 /// # Example
 /// ```
@@ -19,7 +20,7 @@ use std::path::Path;
 /// use bytes::Bytes;
 ///
 /// write_byte_arrays(
-///     "output.rs",
+///     "src/dynamic_resources.rs",
 ///     vec![("ARRAY1", Bytes::from(vec![1, 2, 3]))],
 ///     Some("build_resource_byte_arrays".to_string()),
 /// ).unwrap();
@@ -29,26 +30,28 @@ pub fn write_byte_arrays<P: AsRef<Path>>(
     byte_arrays: Vec<(&str, Bytes)>,
     feature_flag: Option<String>,
 ) -> io::Result<()> {
-    // Ensure the function is running in the context of `build.rs`
+    // Ensure OUT_DIR is set (required for build.rs)
     let out_dir = env::var("OUT_DIR").map_err(|_| {
         io::Error::new(
             io::ErrorKind::Other,
             "This function must be called from within build.rs (OUT_DIR is not set).",
         )
     })?;
+    let output_bin_dir = PathBuf::from(&out_dir).join("bin");
 
     // Resolve the feature flag
     let expanded_feature_flag =
         feature_flag.unwrap_or_else(|| "build_resource_byte_arrays".to_string());
 
-    // Get the Rust file path and OUT_DIR for binaries
-    let rust_file_path = output_rust_path.as_ref();
-    let output_bin_dir = Path::new(&out_dir).join("bin");
-
     // Ensure the output binary directory exists
     fs::create_dir_all(&output_bin_dir)?;
 
     // Create or truncate the Rust file
+    let rust_file_path = output_rust_path.as_ref();
+    let rust_file_dir = rust_file_path
+        .parent()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Invalid Rust file path"))?;
+
     let mut rust_file = File::create(rust_file_path)?;
 
     // Write a header to the Rust file
@@ -63,13 +66,17 @@ pub fn write_byte_arrays<P: AsRef<Path>>(
         let mut bin_file = File::create(&bin_file_path)?;
         bin_file.write_all(&content)?;
 
+        // Compute the relative path from the Rust file to the `.bin` file
+        let bin_file_relative_path = compute_relative_path(&bin_file_path, rust_file_dir)?;
+
         // Write the `#[cfg(feature)]` block
         writeln!(rust_file, "#[cfg(feature = \"{}\")]", expanded_feature_flag)?;
         writeln!(
             rust_file,
-            "pub static {name}: &[u8] = include_bytes!(concat!(env!(\"OUT_DIR\"),\"/bin/{name}.bin\"));",
+            "pub static {name}: &[u8] = include_bytes!(\"{}\");",
+            bin_file_relative_path
         )?;
-        writeln!(rust_file, "")?;
+        writeln!(rust_file)?;
 
         // Write the `#[cfg(not(feature))]` block
         writeln!(
@@ -78,7 +85,7 @@ pub fn write_byte_arrays<P: AsRef<Path>>(
             expanded_feature_flag
         )?;
         writeln!(rust_file, "pub static {name}: &[u8] = &[];")?;
-        writeln!(rust_file, "")?;
+        writeln!(rust_file)?;
 
         // Write a warning using the `ctor` crate for runtime notification
         writeln!(
@@ -94,8 +101,63 @@ pub fn write_byte_arrays<P: AsRef<Path>>(
             expanded_feature_flag
         )?;
         writeln!(rust_file, "}}")?;
-        writeln!(rust_file, "")?;
+        writeln!(rust_file)?;
     }
 
     Ok(())
+}
+
+/// Computes the relative path from `base` to `target`.
+///
+/// This function calculates the relative path from the directory containing
+/// `output_rust_path` to the file in `OUT_DIR`.
+/// Computes the relative path from `base` to `target`.
+///
+/// This function calculates the relative path manually without relying
+/// on any external dependencies.
+///
+/// # Arguments
+/// * `target` - The full path to the target file.
+/// * `base` - The directory to which the relative path will be computed.
+///
+/// # Returns
+/// A relative path from `base` to `target` as a `String`.
+fn compute_relative_path(target: &Path, base: &Path) -> io::Result<String> {
+    let target = target.canonicalize()?;
+    let base = base.canonicalize()?;
+
+    // If the `target` is already under `base`, return the relative path
+    if let Ok(rel_path) = target.strip_prefix(&base) {
+        return rel_path.to_str().map(|s| s.to_string()).ok_or_else(|| {
+            io::Error::new(io::ErrorKind::Other, "Failed to convert path to string")
+        });
+    }
+
+    // Break down `base` and `target` into their components
+    let target_components: Vec<_> = target.components().collect();
+    let base_components: Vec<_> = base.components().collect();
+
+    // Find the common prefix
+    let common_prefix_len = target_components
+        .iter()
+        .zip(base_components.iter())
+        .take_while(|(t, b)| t == b)
+        .count();
+
+    // Calculate how many `..` to go back from `base`
+    let mut relative_path = PathBuf::new();
+    for _ in base_components.iter().skip(common_prefix_len) {
+        relative_path.push("..");
+    }
+
+    // Append the remaining components of `target`
+    for comp in target_components.iter().skip(common_prefix_len) {
+        relative_path.push(comp.as_os_str());
+    }
+
+    // Convert to a string and return
+    relative_path
+        .to_str()
+        .map(|s| s.to_string())
+        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Failed to convert path to string"))
 }
