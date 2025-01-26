@@ -11,3 +11,4 @@ It is intended to help avoid the complexity of relaying `OUT_DIR` from `build.rs
 - https://stackoverflow.com/questions/75676449/how-to-build-and-publish-a-crate-containing-generated-code
 - https://github.com/rust-lang/cargo/issues/12456
 - https://github.com/rust-lang/cargo/issues/9398
+- https://github.com/pyrossh/rust-embed
