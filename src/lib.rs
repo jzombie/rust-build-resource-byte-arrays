@@ -71,6 +71,8 @@ pub fn write_byte_arrays<P: AsRef<Path>>(
 
         // Write the `#[cfg(feature)]` block
         writeln!(rust_file, "#[cfg(feature = \"{}\")]", expanded_feature_flag)?;
+        writeln!(rust_file, "#[doc = \"This file path is automatically generated during compilation and points to a build-time resource (generated pre-compilation by `build.rs`).\"]")?;
+        writeln!(rust_file, "#[doc = \"It reflects the state of the resource at the time of compilation, which may not match the source code or file system in subsequent builds.\"]")?;
         writeln!(
             rust_file,
             "pub static {name}: &[u8] = include_bytes!(\"{}\");",
