@@ -1,7 +1,7 @@
 use bytes::Bytes;
 use std::env;
 use std::fs::{self, File};
-use std::io::{self, Write};
+use std::io::{self, BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 
 /// Writes byte arrays to a Rust file as `pub static` constants and saves the
@@ -162,4 +162,37 @@ fn compute_relative_path(target: &Path, base: &Path) -> io::Result<String> {
         .to_str()
         .map(|s| s.to_string())
         .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Failed to convert path to string"))
+}
+
+/// Clears all `pub static` byte arrays in the specified Rust file.
+///
+/// # Arguments
+/// * `output_path` - The path to the generated Rust file.
+///
+/// # Example
+/// ```
+/// use build_resource_byte_arrays::clear_byte_arrays;
+/// clear_byte_arrays("output.rs")?;
+/// ```
+pub fn clear_byte_arrays(output_path: &str) -> io::Result<()> {
+    let path = Path::new(output_path);
+    // Read the file and collect the lines
+    let file = File::open(path)?;
+    let reader = BufReader::new(file);
+    let mut lines: Vec<String> = reader.lines().collect::<Result<_, _>>()?;
+    // Look for `pub static` definitions and replace their contents with `&[]`
+    for line in lines.iter_mut() {
+        if line.trim_start().starts_with("pub static") {
+            if let Some(eq_pos) = line.find('=') {
+                // Replace everything after the '=' with `&[];`
+                *line = format!("{} = &[];", &line[..eq_pos].trim_end());
+            }
+        }
+    }
+    // Write the updated lines back to the file
+    let mut file = File::create(path)?;
+    for line in lines {
+        writeln!(file, "{}", line)?;
+    }
+    Ok(())
 }
