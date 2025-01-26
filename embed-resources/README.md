@@ -29,3 +29,7 @@ fn main() -> std::io::Result<()> {
 ```
 
 This creates `.bin` files and a Rust source file in the `embed/` directory, ready to use with `include_bytes!`.
+
+## License
+
+[MIT License](LICENSE) (c) 2025 Jeremy Harris.
