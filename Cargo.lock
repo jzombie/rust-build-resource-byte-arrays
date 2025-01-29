@@ -121,14 +121,14 @@ dependencies = [
 
 [[package]]
 name = "embed-bytes"
-version = "0.1.0-alpha2"
+version = "0.1.0-alpha3"
 dependencies = [
  "bytes",
 ]
 
 [[package]]
 name = "embed-resources"
-version = "0.1.0-alpha2"
+version = "0.1.0-alpha3"
 dependencies = [
  "bytes",
  "embed-bytes",
