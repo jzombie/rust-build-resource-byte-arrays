@@ -7,7 +7,7 @@ description = "A simple Rust crate to embed resources (files, URLs, data) as byt
 license = "MIT"
 
 [dependencies]
-embed-bytes = { path = "../embed-bytes", version = "=0.1.0-alpha3" }
+embed-bytes = { path = "../embed-bytes" }
 flate2 = "1.0.35"
 reqwest =  { version = "0.12.12", features = ["blocking"] }
 bytes = "1.9.0"
