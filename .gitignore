@@ -1,1 +1,3 @@
 **/target/*
+embed-bytes/embed.rs
+embed-bytes/embed/**
